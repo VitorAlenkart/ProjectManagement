@@ -40,6 +40,70 @@ public sealed class AuthenticationIntegrationTests : IClassFixture<ProjectManage
     }
 
     [Fact]
+    public async Task Signup_WhenTeacherPayloadIsValid_ReturnsOk()
+    {
+        var response = await _client.PostAsJsonAsync("/api/signup", new
+        {
+            email = "new.teacher@example.com",
+            fullName = "New Teacher",
+            password = "Senha@123",
+            occupationArea = "Computer Science",
+            formationArea = "Software Engineering"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/login", new
+        {
+            email = "new.teacher@example.com",
+            password = "Senha@123"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Signup_WhenTeacherPayloadIsInvalid_ReturnsBadRequest()
+    {
+        var response = await _client.PostAsJsonAsync("/api/signup", new
+        {
+            email = "new.teacher@example.com",
+            fullName = "New Teacher",
+            password = "Senha@123",
+            formationArea = "Software Engineering"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Signup_WhenStudentPayloadIsInvalid_ReturnsBadRequest()
+    {
+        var response = await _client.PostAsJsonAsync("/api/signup", new
+        {
+            email = "new.student@example.com",
+            fullName = "New Student",
+            password = "Senha@123"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Signup_WhenStudentPayloadIsInvalid2_ReturnsBadRequest()
+    {
+        var response = await _client.PostAsJsonAsync("/api/signup", new
+        {
+            email = "",
+            fullName = "",
+            password = "",
+            educationalInstitution = ""
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Signup_WhenEmailAlreadyExists_ReturnsBadRequest()
     {
         var response = await _client.PostAsJsonAsync("/api/signup", new

@@ -40,7 +40,7 @@ namespace ProjectManagementAPI.Controllers
 
             ActionResult result;
             
-            if (fullName != null && password != null && email != null && (educationalInstitution != null || (occupationArea != null && formationArea != null)))
+            if (IsValidUserType(json))
             {
                 if(_userService.verifyEmailExists(email)) {
                     result = BadRequest("Email already in use.");
@@ -56,6 +56,35 @@ namespace ProjectManagementAPI.Controllers
                 result = BadRequest("Invalid registration data.");
             }
         
+            return result;
+        }
+
+        private bool IsValidUserType(JsonElement json)
+        {
+            string? email = json.TryGetProperty("email", out var emailProperty) ? emailProperty.GetString() : null;
+            string? fullName = json.TryGetProperty("fullName", out var fullNameProperty) ? fullNameProperty.GetString() : null;
+            string? password = json.TryGetProperty("password", out var passwordProperty) ? (passwordProperty.GetString()!) : null;  
+            string? occupationArea = json.TryGetProperty("occupationArea", out var occupationAreaProperty) ? occupationAreaProperty.GetString() : null;
+            string? formationArea = json.TryGetProperty("formationArea", out var formationAreaProperty) ? formationAreaProperty.GetString() : null;
+            string? educationalInstitution = json.TryGetProperty("educationalInstitution", out var educationalInstitutionProperty) ? educationalInstitutionProperty.GetString() : null;
+            bool result = false;
+            if((email != null && email.Contains("@")))
+            {
+                if (fullName != null && fullName.Length > 2)
+                {
+                    if (password != null && password.Length >= 6)
+                    {
+                        if(occupationArea != null && occupationArea.Length > 2 && formationArea != null && formationArea.Length > 2)
+                        {
+                            result = true;
+                        }
+                        else if (educationalInstitution != null && educationalInstitution.Length > 2)
+                        {
+                            result = true;
+                        }
+                    }
+                }
+            } 
             return result;
         }
 
