@@ -14,16 +14,17 @@ namespace ProjectManagementAPI.Services
             _passwordHasher = new PasswordHasher<string>();
         }
 
-        public string HashPassword(string password)
+        public string HashPassword(string email, string password)
         {
-            string result = _passwordHasher.HashPassword(null, password);
+            string result = _passwordHasher.HashPassword(email, password);
 
             return result;
         }
 
-        public bool VerifyPassword(string password, string hashedPassword)
+        public bool VerifyPassword(string email, string password)
         {
-            bool result = _passwordHasher.VerifyHashedPassword(null, hashedPassword, password) == PasswordVerificationResult.Success;
+            string hashedPassword = HashPassword(email, password);
+            bool result = _passwordHasher.VerifyHashedPassword(email, hashedPassword, password) == PasswordVerificationResult.Success;
 
             return result;
         }

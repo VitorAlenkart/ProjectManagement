@@ -1,107 +1,89 @@
-﻿using Humanizer;
-using Microsoft.IdentityModel.Tokens;
-using ProjectManagementAPI.Data;
+﻿using Microsoft.IdentityModel.Tokens;
 using ProjectManagementAPI.DTOs;
 using ProjectManagementAPI.Models;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using ProjectManagementAPI.Repositories.Interfaces;
 
 namespace ProjectManagementAPI.Services
 {
-    public class UserService
+    public class UserService(IUserRepository repository, PasswordService passwordService, IConfiguration configuration)
     {
-        private readonly ApplicationContext _context;
-        private readonly PasswordService _passwordService;
-        private readonly IConfiguration _configuration;
+        private readonly IUserRepository _repository = repository;
+        private readonly PasswordService _passwordService = passwordService;
+        private readonly IConfiguration _configuration = configuration;
 
-        public UserService(ApplicationContext context, PasswordService passwordService, IConfiguration configuration)
+        public async Task<Student> CreateStudentAsync(RegisterDTO studentDto)
         {
-            _context = context;
-            _passwordService = passwordService;
-            _configuration = configuration;
-        }
-
-        public Student createStudent(string fullName, string email, string password, string educationalInstitution)
-        {
-            Student result = new Student()
+            Student student = new()
             {
-                FullName = fullName,
-                Email = email,
-                HashedPassword = _passwordService.HashPassword(password),
-                EducationalInstitution = educationalInstitution
+                FullName = studentDto.FullName,
+                Email = studentDto.Email,
+                HashedPassword = _passwordService.HashPassword(studentDto.Email, studentDto.Password),
+                EducationalInstitution = studentDto.EducationalInstitution!
             };
 
-            _context.Students.Add(result);
-            _context.SaveChanges();
+            await _repository.AddStudentAsync(student);
+            await _repository.SaveChangesAsync();
 
-            return result;
+            return student;
+
         }
 
-        public Teacher createTeacher(string fullName, string email, string password, string occupationArea, string formationArea)
+        public async Task<Teacher> CreateTeacherAsync(RegisterDTO teacherDto)
         {
-            Teacher result = new Teacher()
+            Teacher teacher = new()
             {
-                FullName = fullName,
-                Email = email,
-                HashedPassword = _passwordService.HashPassword(password),
-                OccupationArea = occupationArea,
-                FormationArea = formationArea
+                FullName = teacherDto.FullName,
+                Email = teacherDto.Email,
+                HashedPassword = _passwordService.HashPassword(teacherDto.Email, teacherDto.Password),
+                OccupationArea = teacherDto.OccupationArea!,
+                FormationArea = teacherDto.FormationArea!
             };
 
-            _context.Teachers.Add(result);
-            _context.SaveChanges();
+            await _repository.AddTeacherAsync(teacher);
 
-            return result;
+            await _repository.SaveChangesAsync();
+
+            return teacher;
         }
 
-        public User createUser(string fullName, string email, string password, string? educationalInstitution = null, string? occupationArea = null, string? formationArea = null)
+        public async Task<User> CreateUserAsync(RegisterDTO dto)
         {
-            User result;
-
-            if (educationalInstitution != null)
+            User user;
+            if (dto.UserType == "Teacher")
             {
-                result = createStudent(fullName, email, password, educationalInstitution);
+                user = await CreateStudentAsync(dto);
             }
-            else if (occupationArea != null && formationArea != null)
+            else if (dto.UserType == "User")
             {
-                result = createTeacher(fullName, email, password, occupationArea, formationArea);
+                user = await CreateTeacherAsync(dto);
             }
             else
             {
                 throw new ArgumentException("Invalid user type");
             }
 
+            return user;
+        }
+
+        public async Task<bool> VerifyEmailExistsAsync(string email)
+        {
+            bool result =  await _repository.EmailExistsAsync(email);
+
             return result;
         }
 
-        public bool verifyEmailExists(string email)
+        public async Task<User?> Login(string email, string password)
         {
-            bool result = _context.Students.Any(s => s.Email == email) || _context.Teachers.Any(t => t.Email == email);
+            User? user = await _repository.GetUserByEmailAsync(email);
 
-            return result;
-        }
-
-        public User? login(string email, string password)
-        {
-            User? user = null;
-
-            var student = _context.Students.FirstOrDefault(s => s.Email == email);
-            var teacher = _context.Teachers.FirstOrDefault(t => t.Email == email);
-
-            if (student != null)
+            if (user != null)
             {
-                if (_passwordService.VerifyPassword(password, student.HashedPassword))
+                if (!(_passwordService.VerifyPassword(email, password)))
                 {
-                    user = student;
-                }
-            }
-            else if (teacher != null)
-            {
-                if (_passwordService.VerifyPassword(password, teacher.HashedPassword))
-                {
-                    user = teacher;
+                    user = null;
                 }
             }
 
@@ -128,19 +110,20 @@ namespace ProjectManagementAPI.Services
                 expires: DateTime.Now.AddHours(2),
                 signingCredentials: creds
             );
+
             return token;
         }
 
-        public bool UserExists(int id)
+        public async Task<bool> UserExists(int id)
         {
-            bool result = _context.Students.Any(s => s.Id == id) || _context.Teachers.Any(t => t.Id == id);
+            bool exists = await _repository.UserExistsAsync(id);
 
-            return result;
+            return exists;
         }
 
-        public Student? GetStudentById(int id)
+        public async Task<Student?> GetStudentById(int id)
         {
-            Student? result = _context.Students.FirstOrDefault(s => s.Id == id);
+            Student? result = await _repository.GetStudentByIdAsync(id);
 
             return result;
         }

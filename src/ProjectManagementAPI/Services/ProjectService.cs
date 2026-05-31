@@ -41,7 +41,7 @@ namespace ProjectManagementAPI.Services
 
                 foreach (var relation in relations)
                 {
-                    var student = _userService.GetStudentById(relation.StudentId);
+                    var student = await _userService.GetStudentById(relation.StudentId);
 
                     if (student != null)
                     {

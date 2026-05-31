@@ -51,6 +51,26 @@ namespace ProjectManagementAPI.Repositories
             return teacher;
         }
 
+        public async Task<User?> GetUserByIdAsync(int id)
+        {
+            User? user = (User?) await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == id) ??
+                await _context.Teachers
+                .FirstOrDefaultAsync(t => t.Id == id);
+            
+            return user;
+        }
+
+        public async Task<User?> GetUserEmailAsync(string email)
+        {
+            User? user = (User?)await _context.Students
+                .FirstOrDefaultAsync(s => s.Email == email) ??
+                await _context.Teachers
+                .FirstOrDefaultAsync(t => t.Email == email);
+
+            return user;
+        }
+
         public async Task<bool> EmailExistsAsync(string email)
         {
             bool exists = await _context.Students

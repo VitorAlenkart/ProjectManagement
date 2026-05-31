@@ -1,14 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using NuGet.DependencyResolver;
-using ProjectManagementAPI.Data;
 using ProjectManagementAPI.DTOs;
 using ProjectManagementAPI.Models;
 using ProjectManagementAPI.Services;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 
 
 namespace ProjectManagementAPI.Controllers
@@ -27,62 +21,21 @@ namespace ProjectManagementAPI.Controllers
         }
 
         [HttpPost("signup")]
-        public async Task<ActionResult> Register([FromBody] JsonElement json)
+        public async Task<ActionResult> Register(RegisterDTO dto)
         {
-            String? email = json.TryGetProperty("email", out var emailProperty) ? emailProperty.GetString() : null;
-            String? fullName = json.TryGetProperty("fullName", out var fullNameProperty) ? fullNameProperty.GetString() : null;
-            String? occupationArea = json.TryGetProperty("occupationArea", out var occupationAreaProperty) ? occupationAreaProperty.GetString() : null;
-            String? formationArea = json.TryGetProperty("formationArea", out var formationAreaProperty) ? formationAreaProperty.GetString() : null;
-            String? educationalInstitution = json.TryGetProperty("educationalInstitution", out var educationalInstitutionProperty) ? educationalInstitutionProperty.GetString() : null;
-            String? password = json.TryGetProperty("password", out var passwordProperty) ? (passwordProperty.GetString()!) : null;
-
             ActionResult result;
-            
-            if (IsValidUserType(json))
+            User user;
+
+            if(await _userService.VerifyEmailExistsAsync(dto.Email))
             {
-                if(_userService.verifyEmailExists(email)) {
-                    result = BadRequest("Email already in use.");
-                }
-                else
-                {
-                    User user = _userService.createUser(fullName, email, password, educationalInstitution, occupationArea, formationArea);
-                    result = Ok(user);
-                }
+                result = BadRequest("Email already in use.");
             }
             else
             {
-                result = BadRequest("Invalid registration data.");
+                user = await _userService.CreateUserAsync(dto);
+                result = Ok(user);
             }
-        
-            return result;
-        }
 
-        private bool IsValidUserType(JsonElement json)
-        {
-            string? email = json.TryGetProperty("email", out var emailProperty) ? emailProperty.GetString() : null;
-            string? fullName = json.TryGetProperty("fullName", out var fullNameProperty) ? fullNameProperty.GetString() : null;
-            string? password = json.TryGetProperty("password", out var passwordProperty) ? (passwordProperty.GetString()!) : null;  
-            string? occupationArea = json.TryGetProperty("occupationArea", out var occupationAreaProperty) ? occupationAreaProperty.GetString() : null;
-            string? formationArea = json.TryGetProperty("formationArea", out var formationAreaProperty) ? formationAreaProperty.GetString() : null;
-            string? educationalInstitution = json.TryGetProperty("educationalInstitution", out var educationalInstitutionProperty) ? educationalInstitutionProperty.GetString() : null;
-            bool result = false;
-            if((email != null && email.Contains("@")))
-            {
-                if (fullName != null && fullName.Length > 2)
-                {
-                    if (password != null && password.Length >= 6)
-                    {
-                        if(occupationArea != null && occupationArea.Length > 2 && formationArea != null && formationArea.Length > 2)
-                        {
-                            result = true;
-                        }
-                        else if (educationalInstitution != null && educationalInstitution.Length > 2)
-                        {
-                            result = true;
-                        }
-                    }
-                }
-            } 
             return result;
         }
 
@@ -94,7 +47,7 @@ namespace ProjectManagementAPI.Controllers
             if (dto.Email != null && dto.Password != null)
             {
                 string role = "";
-                User? user = _userService.login(dto.Email, dto.Password);
+                User? user = await _userService.Login(dto.Email, dto.Password);
 
                 if(user == null)
                 {

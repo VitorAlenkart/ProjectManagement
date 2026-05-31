@@ -16,6 +16,10 @@ namespace ProjectManagementAPI.Repositories.Interfaces
 
         Task<Teacher?> GetTeacherByEmailAsync(string email);
 
+        Task<User?> GetUserByIdAsync(int id);
+
+        Task<User?> GetUserByEmailAsync(string email);
+
         Task<bool> EmailExistsAsync(string email);
 
         Task<bool> UserExistsAsync(int id);

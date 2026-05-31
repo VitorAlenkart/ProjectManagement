@@ -135,7 +135,7 @@ namespace ProjectManagementAPI.Controllers
             {
                 result = NotFound("Project not found");
             }
-            else if (!_userService.UserExists(dto.StudentId))
+            else if (!await _userService.UserExists(dto.StudentId))
             {
                 result = NotFound("Student not found");
                 _logger.LogInformation("Teacher {teacherId} tried add a student to project {projectId}, but student don't exists", teacherId, projectId);
@@ -172,7 +172,7 @@ namespace ProjectManagementAPI.Controllers
             {
                 result = NotFound("Project not found");
             }
-            else if (!_userService.UserExists(studentId))
+            else if (! await _userService.UserExists(studentId))
             {
                 result = NotFound("Student not found");
                 _logger.LogInformation("Teacher {teacherId} tried delete a student from project {projectId}, but student don't exists", teacherId, projectId);
