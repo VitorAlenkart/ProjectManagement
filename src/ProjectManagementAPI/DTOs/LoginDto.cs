@@ -1,6 +1,6 @@
 ﻿namespace ProjectManagementAPI.DTOs
 {
-    public class LoginDto
+    public class LoginDTO
     {
         public required string Email { get; set; }
 

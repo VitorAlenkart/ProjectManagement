@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using NuGet.DependencyResolver;
 using ProjectManagementAPI.Data;
 using ProjectManagementAPI.DTOs;
@@ -89,7 +87,7 @@ namespace ProjectManagementAPI.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> Login(LoginDto dto)
+        public async Task<ActionResult> Login(LoginDTO dto)
         {
             ActionResult result = BadRequest("Email and password are required.");
 
